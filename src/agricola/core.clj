@@ -11,7 +11,7 @@
     :action (fn [s])
     :andor (fn [s])}
    {:name "Starting Player"
-    :action (fn [s] s)
+    :action (fn [s a] (assoc s :starting-player (current-player s)))
     :andor (fn [s])}
    {:name "Take 1 Grain"
     :action (fn [s] (update-in s [:players (current-player s) :grain] inc))}
@@ -21,33 +21,33 @@
     :action (fn [s] (update-in s [:players (current-player s) :food] + 2))}
    {:name "3 Wood"
     :current 0
-    :accumulate [3 :wood]
+    :accumulate 3
     :action (fn [s a] (update-in s [:players (current-player s) :wood] + (:current a)))}
    {:name "1 Clay"
     :current 0
-    :accumulate [1 :clay]
+    :accumulate 1
     :action (fn [s a] (update-in s [:players (current-player s) :clay] + (:current a)))}
    {:name "1 Reed"
     :current 0
-    :accumulate [1 :reed]
+    :accumulate 1
     :action (fn [s a] (update-in s [:players (current-player s) :reed] + (:current a)))}
    {:name "Fishing"
     :current 0
-    :accumulate [1 :food]
+    :accumulate 1
     :action (fn [s a] (update-in s [:players (current-player s) :food] + (:current a)))}
    {:name "Major/Minor Improvement"
     :stage 1}
    {:name "1 Sheep"
     :stage 1
     :current 0
-    :accumulate [1 :sheep]}
+    :accumulate 1}
    {:name "Sow/Bake Bread"
     :stage 1}
    {:name "Fences"
     :stage 1}
    {:name "1 Stone [1]"
     :stage 2
-    :accumulate [1 :stone]}
+    :accumulate 1}
    {:name "Family Growth"
     :stage 2}
    {:name "Renovation"
@@ -57,15 +57,15 @@
    {:name "1 Wild Boar"
     :stage 3
     :current 0
-    :accumulate [1 :boar]}
+    :accumulate 1}
    {:name "1 Cattle"
     :stage 4
     :current 0
-    :accumulate [1 :cattle]}
+    :accumulate 1}
    {:name "1 Stone [2]"
     :stage 4
     :current 0
-    :accumulate [1 :stone]}
+    :accumulate 1}
    {:name "Plow 1 Field and/or Sow"
     :stage 5}
    {:name "Family Growth without space"
@@ -117,7 +117,7 @@
 (defn accumulate-actions [actions]
   "Add resources to action spaces that accumulate"
   (mapv (fn [action]
-         (if-let [[resource-n resource-type] (:accumulate action)]
+         (if-let [resource-n (:accumulate action)]
            (assoc action :current (+ resource-n (:current action)))
            action))
           actions))
@@ -128,6 +128,11 @@
       (update-in [:future-rounds] rest)))
 
 (def round1 (update-in (add-next-action (setup)) [:actions] accumulate-actions))
+round1
+
+(defn pick-action [actions]
+
+  )
 
 (defn perform-action [s action-n]
   (let [action (nth (:actions s) action-n)]
