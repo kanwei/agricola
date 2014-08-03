@@ -1,5 +1,5 @@
 (ns agricola.core
-  (require [criterium.core :refer :all])
+  (require [taoensso.timbre :refer :all])
   (:gen-class))
 
 (defn current-player [s]
@@ -7,8 +7,7 @@
 
 (def actions
   [{:name "Build Room"
-    :req (fn [s] (>= (get-in s [(current-player s) :wood]) 2))
-    :action (fn [s])
+    :req (fn [s] (>= (get-in s [:players (current-player s) :wood]) 2))
     :andor (fn [s])}
 
    {:name "Starting Player"
@@ -16,13 +15,13 @@
     :andor (fn [s])}
 
    {:name "Take 1 Grain"
-    :action (fn [s] (update-in s [:players (current-player s) :grain] inc))}
+    :action (fn [s a] (update-in s [:players (current-player s) :grain] inc))}
 
    {:name "Plow 1 Field"
-    :action (fn [s] (update-in s [:players (current-player s) :field] conj {}))}
+    :action (fn [s a] (update-in s [:players (current-player s) :fields] conj {}))}
 
    {:name "Day Laborer"
-    :action (fn [s] (update-in s [:players (current-player s) :food] + 2))}
+    :action (fn [s a] (update-in s [:players (current-player s) :food] + 2))}
 
    {:name "3 Wood"
     :current 0
@@ -45,6 +44,7 @@
     :action (fn [s a] (update-in s [:players (current-player s) :food] + (:current a)))}
 
    {:name "Major/Minor Improvement"
+    :req (constantly false)
     :stage 1}
 
    {:name "1 Sheep"
@@ -54,10 +54,12 @@
     :action (fn [s a] (update-in s [:players (current-player s) :sheep] + (:current a)))}
 
    {:name "Sow/Bake Bread"
+    :req (constantly false)
     :stage 1}
 
    {:name "Fences"
-    :stage 1}
+    :stage 1
+    :req (fn [s] (>= (get-in s [:players (current-player s) :wood]) 4))}
 
    {:name "1 Stone [1]"
     :stage 2
@@ -96,10 +98,10 @@
    {:name "Plow 1 Field and/or Sow"
     :stage 5}
 
-   {:name "Family Growth without space"
+   {:name "Family Growth even without space"
     :stage 5}
 
-   {:name "Renovation Fences"
+   {:name "After Renovation Fences"
     :stage 6}
    ])
 
@@ -111,8 +113,12 @@
 
 (defn setup-player [n]
   {:name n
-   :food 2
-   :field []
+   :rooms 2
+   :workers 2
+   :house-type :wood
+   :food 3
+   :pastures []
+   :fields []
    :grain 0
    :vegetable 0
    :wood 0
@@ -136,13 +142,6 @@
 
   )
 
-#_(defn accumulate-actions [actions]
-  (reduce (fn [new-actions action]
-            (if-let [[resource-n resource-type] (:accumulate action)]
-              (update-in new-actions [resource-type] + resource-n)
-              new-actions))
-          actions))
-
 (defn accumulate-actions [actions]
   "Add resources to action spaces that accumulate"
   (mapv (fn [action]
@@ -160,26 +159,30 @@
 round1
 
 (defn pick-action [actions]
-  )
+  (nth actions (rand-int (count actions))))
 
-(defn perform-action [s action-n]
-  (let [action (nth (:actions s) action-n)]
+(defn perform-action [s action]
+  (info "Performing" (:name action))
+  (let [action-n (.indexOf (:actions s) action)]
     (-> ((:action action) s action)
         (assoc-in [:actions action-n :current] 0)
         (assoc-in [:actions action-n :occupied] true))))
 
 (defn possible-actions [s]
   (filter (fn [action]
-            (and (not (:occupied action))))
+            (and (not (:occupied action))
+                 (or (nil? (:req action))
+                     ((:req action) s))))
           (:actions s)))
 
 (possible-actions round1)
 
 (nth (:actions round1) 7)
 
+(possible-actions round1)
+(:actions (possible-actions round1))
 (count (possible-actions round1))
-(count (possible-actions (perform-action round1 7)))
-
+(count (possible-actions (perform-action round1 (pick-action (possible-actions round1)))))
 
 (defn play [s round-n]
   (if (>= round-n 14)
@@ -187,12 +190,7 @@ round1
     (recur s (inc round-n)))
   )
 
-
-
 (play {} 0)
-
-
-
 
 (def major-improvements
   [{:name "Well"
