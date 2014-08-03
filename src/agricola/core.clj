@@ -10,66 +10,95 @@
     :req (fn [s] (>= (get-in s [(current-player s) :wood]) 2))
     :action (fn [s])
     :andor (fn [s])}
+
    {:name "Starting Player"
     :action (fn [s a] (assoc s :starting-player (current-player s)))
     :andor (fn [s])}
+
    {:name "Take 1 Grain"
     :action (fn [s] (update-in s [:players (current-player s) :grain] inc))}
+
    {:name "Plow 1 Field"
     :action (fn [s] (update-in s [:players (current-player s) :field] conj {}))}
+
    {:name "Day Laborer"
     :action (fn [s] (update-in s [:players (current-player s) :food] + 2))}
+
    {:name "3 Wood"
     :current 0
     :accumulate 3
     :action (fn [s a] (update-in s [:players (current-player s) :wood] + (:current a)))}
+
    {:name "1 Clay"
     :current 0
     :accumulate 1
     :action (fn [s a] (update-in s [:players (current-player s) :clay] + (:current a)))}
+
    {:name "1 Reed"
     :current 0
     :accumulate 1
     :action (fn [s a] (update-in s [:players (current-player s) :reed] + (:current a)))}
+
    {:name "Fishing"
     :current 0
     :accumulate 1
     :action (fn [s a] (update-in s [:players (current-player s) :food] + (:current a)))}
+
    {:name "Major/Minor Improvement"
     :stage 1}
+
    {:name "1 Sheep"
     :stage 1
     :current 0
-    :accumulate 1}
+    :accumulate 1
+    :action (fn [s a] (update-in s [:players (current-player s) :sheep] + (:current a)))}
+
    {:name "Sow/Bake Bread"
     :stage 1}
+
    {:name "Fences"
     :stage 1}
+
    {:name "1 Stone [1]"
     :stage 2
-    :accumulate 1}
+    :current 0
+    :accumulate 1
+    :action (fn [s a] (update-in s [:players (current-player s) :stone] + (:current a)))}
+
    {:name "Family Growth"
     :stage 2}
+
    {:name "Renovation"
     :stage 2}
+
    {:name "Take 1 Vegetable"
-    :stage 3}
+    :stage 3
+    :action (fn [s a] (update-in s [:players (current-player s) :vegetable] inc))}
+
    {:name "1 Wild Boar"
     :stage 3
     :current 0
-    :accumulate 1}
+    :accumulate 1
+    :action (fn [s a] (update-in s [:players (current-player s) :boar] + (:current a)))}
+
    {:name "1 Cattle"
     :stage 4
     :current 0
-    :accumulate 1}
+    :accumulate 1
+    :action (fn [s a] (update-in s [:players (current-player s) :cattle] + (:current a)))}
+
    {:name "1 Stone [2]"
     :stage 4
     :current 0
-    :accumulate 1}
+    :accumulate 1
+    :action (fn [s a] (update-in s [:players (current-player s) :stone] + (:current a)))}
+
    {:name "Plow 1 Field and/or Sow"
     :stage 5}
+
    {:name "Family Growth without space"
     :stage 5}
+
    {:name "Renovation Fences"
     :stage 6}
    ])
@@ -131,7 +160,6 @@
 round1
 
 (defn pick-action [actions]
-
   )
 
 (defn perform-action [s action-n]
@@ -140,9 +168,30 @@ round1
         (assoc-in [:actions action-n :current] 0)
         (assoc-in [:actions action-n :occupied] true))))
 
+(defn possible-actions [s]
+  (filter (fn [action]
+            (and (not (:occupied action))))
+          (:actions s)))
+
+(possible-actions round1)
+
 (nth (:actions round1) 7)
 
-(perform-action round1 7)
+(count (possible-actions round1))
+(count (possible-actions (perform-action round1 7)))
+
+
+(defn play [s round-n]
+  (if (>= round-n 14)
+    [s round-n]
+    (recur s (inc round-n)))
+  )
+
+
+
+(play {} 0)
+
+
 
 
 (def major-improvements
