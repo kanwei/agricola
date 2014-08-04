@@ -1,5 +1,6 @@
 (ns agricola.core
-  (require [taoensso.timbre :refer :all])
+  (require [taoensso.timbre :refer :all]
+           [criterium.core :as crit])
   (:gen-class))
 
 (defn current-player [s]
@@ -177,12 +178,15 @@ round1
 
 (possible-actions round1)
 
-(nth (:actions round1) 7)
+(nth (:actions round1) 5)
 
 (possible-actions round1)
 (:actions (possible-actions round1))
 (count (possible-actions round1))
-(count (possible-actions (perform-action round1 (pick-action (possible-actions round1)))))
+
+#_(crit/quick-bench
+  (count (possible-actions (perform-action round1 (pick-action (possible-actions round1))))))
+
 
 (defn play [s round-n]
   (if (>= round-n 14)
